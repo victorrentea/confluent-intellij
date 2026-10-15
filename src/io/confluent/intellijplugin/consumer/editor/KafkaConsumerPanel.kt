@@ -34,6 +34,10 @@ import io.confluent.intellijplugin.core.util.executeNotOnEdtSuspend
 import io.confluent.intellijplugin.core.util.invokeLater
 import io.confluent.intellijplugin.core.util.withPluginClassLoader
 import io.confluent.intellijplugin.core.rfs.driver.SafeExecutor
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import io.confluent.intellijplugin.data.BaseClusterDataManager
 import io.confluent.intellijplugin.telemetry.MessageViewerEvent
@@ -404,46 +408,56 @@ class KafkaConsumerPanel(
                 } ?: output.setMaxRows(0)
             }
 
-            withPluginClassLoader {
-                // Callbacks called in Kafka client threads. That's why, to properly update UI we calling invokeLater
-                consumerClient.start(
-                    runConfig,
-                    keyConfig = key.loadFieldConfig(),
-                    valueConfig = value.loadFieldConfig(),
-                    consume = { pollTime, records ->
-                        val convertedRecords = records.map {
-                            KafkaRecord.createFor(
+            // start() is a blocking poll loop that never checks coroutine cancellation: on plugin unload the IDE
+            // cancels our scope and waits 10s for it, so stop the loop as soon as cancellation begins
+            @OptIn(InternalCoroutinesApi::class)
+            val stopOnCancel = currentCoroutineContext().job.invokeOnCompletion(onCancelling = true) {
+                if (it is CancellationException) consumerClient.stop()
+            }
+            try {
+                withPluginClassLoader {
+                    // Callbacks called in Kafka client threads. That's why, to properly update UI we calling invokeLater
+                    consumerClient.start(
+                        runConfig,
+                        keyConfig = key.loadFieldConfig(),
+                        valueConfig = value.loadFieldConfig(),
+                        consume = { pollTime, records ->
+                            val convertedRecords = records.map {
+                                KafkaRecord.createFor(
+                                    key.fieldTypeComboBox.item, value.fieldTypeComboBox.item,
+                                    key.schemaComboBox.item?.schemaFormat,
+                                    value.schemaComboBox.item?.schemaFormat,
+                                    Result.success(it)
+                                )
+                            }
+                            if (convertedRecords.isEmpty())
+                                return@start
+                            invokeLater {
+                                output.addBatchRows(pollTime, convertedRecords)
+                            }
+                        },
+                        timestampUpdate = {
+                            invokeLater {
+                                progress.onUpdate()
+                            }
+                        },
+                        consumeError = { error, partition, offset ->
+                            val element = KafkaRecord.createFor(
                                 key.fieldTypeComboBox.item, value.fieldTypeComboBox.item,
                                 key.schemaComboBox.item?.schemaFormat,
                                 value.schemaComboBox.item?.schemaFormat,
-                                Result.success(it)
+                                Result.failure(error),
+                                errorPartition = partition,
+                                errorOffset = offset
                             )
-                        }
-                        if (convertedRecords.isEmpty())
-                            return@start
-                        invokeLater {
-                            output.addBatchRows(pollTime, convertedRecords)
-                        }
-                    },
-                    timestampUpdate = {
-                        invokeLater {
-                            progress.onUpdate()
-                        }
-                    },
-                    consumeError = { error, partition, offset ->
-                        val element = KafkaRecord.createFor(
-                            key.fieldTypeComboBox.item, value.fieldTypeComboBox.item,
-                            key.schemaComboBox.item?.schemaFormat,
-                            value.schemaComboBox.item?.schemaFormat,
-                            Result.failure(error),
-                            errorPartition = partition,
-                            errorOffset = offset
-                        )
-                        invokeLater {
-                            progress.onError()
-                            output.addError(element)
-                        }
-                    })
+                            invokeLater {
+                                progress.onError()
+                                output.addError(element)
+                            }
+                        })
+                }
+            } finally {
+                stopOnCancel.dispose()
             }
         } catch (t: Throwable) {
             onStopConsume()
