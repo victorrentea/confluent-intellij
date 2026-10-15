@@ -1,5 +1,7 @@
 package io.confluent.intellijplugin.toolwindow.actions
 
+import io.confluent.intellijplugin.util.KafkaMessagesBundle
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ide.actions.NewElementAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
@@ -10,6 +12,11 @@ import io.confluent.intellijplugin.data.BaseClusterDataManager
 import io.confluent.intellijplugin.util.KafkaDialogFactory
 
 class CreateTopicAction : NewElementAction(), ActionPromoter, DumbAware {
+    init {
+        // a bare "+" next to "Producer"/"Consumer" didn't say what it creates
+        templatePresentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val dataManager = e.dataManager as BaseClusterDataManager
         KafkaDialogFactory.showCreateTopicDialog(dataManager)
@@ -19,6 +26,9 @@ class CreateTopicAction : NewElementAction(), ActionPromoter, DumbAware {
         val rfsPath = e.rfsPath
         e.presentation.isEnabledAndVisible =
             e.dataManager is BaseClusterDataManager && rfsPath?.isTopicFolderOrChild() == true
+        e.presentation.text = KafkaMessagesBundle.message(
+            if (e.isFromActionToolbar) "action.kafka.CreateTopicAction.toolbar.text" else "action.kafka.CreateTopicAction.text"
+        )
     }
 
     override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
