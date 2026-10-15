@@ -17,7 +17,12 @@ RELEASE_NAME=v$VERSION ./gradlew buildPlugin -x test -x buildSearchableOptions -
 
 [[ -f "$TARGET" ]] || { echo "Not installed at $TARGET — install the zip from disk once"; exit 1; }
 LOG_LINES=$(wc -l < "$LOG")
-cp build/libs/$JAR "$TARGET"
+# Never overwrite in place: the loaded plugin's classloader still reads the old jar by offset,
+# and a rewritten file gives it ZipExceptions → ClassNotFound → an empty tool window.
+# A rename swaps the path to a new file while the old one stays intact for whoever has it open.
+STAGED="${TARGET:h:h}/$JAR.tmp"   # outside lib/ so the IDE never sees it, same volume so mv is a rename
+cp build/libs/$JAR "$STAGED"
+mv -f "$STAGED" "$TARGET"
 echo "Copied $JAR — waiting for IntelliJ to reload it (click into IntelliJ if nothing happens)…"
 
 for i in {1..60}; do
