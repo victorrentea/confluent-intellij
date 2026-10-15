@@ -33,7 +33,8 @@ enum class KafkaFieldType(@Nls val title: String) {
 
     fun getDeserializationClass(dataManager: KafkaDataManager, consumerField: ConsumerProducerFieldConfig) =
         when (this) {
-            STRING, JSON -> StringDeserializer()
+            STRING -> ReadableStringDeserializer()
+            JSON -> StringDeserializer()
             LONG -> LongDeserializer()
             DOUBLE -> DoubleDeserializer()
             INTEGER -> IntegerDeserializer()
