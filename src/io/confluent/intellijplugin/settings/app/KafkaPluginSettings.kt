@@ -22,7 +22,7 @@ class KafkaPluginSettings : PersistentStateComponent<KafkaPluginSettings> {
     var rebrandNotificationShown: Boolean = false
 
     // Whether the Confluent Cloud tab is hidden from the monitoring tool window
-    var hideConfluentCloudTab: Boolean = false
+    var hideConfluentCloudTab: Boolean = true
 
     override fun getState(): KafkaPluginSettings = this
 
