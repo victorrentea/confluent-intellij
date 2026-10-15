@@ -55,3 +55,6 @@ build/
 .kotlin/
 
 .vscode/
+
+# e2e screenshots taken by Codex
+e2e/shots/
