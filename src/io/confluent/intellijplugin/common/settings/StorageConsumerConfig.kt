@@ -135,7 +135,7 @@ data class StorageConsumerConfig(
 
     fun getStartsWith(): ConsumerStartWith {
         return ConsumerStartWith(ConsumerStartType.entries.firstOrNull { it.name == startWith["type"] }
-            ?: ConsumerStartType.NOW,
+            ?: ConsumerStartType.THE_BEGINNING,
             startWith["time"]?.toLongOrNull(),
             startWith["offset"]?.toLongOrNull(),
             startWith["consumerGroup"])

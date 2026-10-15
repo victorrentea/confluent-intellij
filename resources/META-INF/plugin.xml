@@ -27,6 +27,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <backgroundPostStartupActivity
                 implementation="io.confluent.intellijplugin.updater.RebrandNotificationActivity"/>
+        <postStartupActivity implementation="io.confluent.intellijplugin.dev.HotReloadWatcherActivity"/>
         <errorHandler implementation="io.confluent.intellijplugin.telemetry.KafkaErrorReportSubmitter"/>
         <notificationGroup id="kafka" displayType="STICKY_BALLOON"
                            bundle="messages.KafkaBundle"

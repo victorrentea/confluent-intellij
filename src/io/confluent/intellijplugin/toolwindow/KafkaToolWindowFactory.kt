@@ -1,5 +1,6 @@
 package io.confluent.intellijplugin.toolwindow
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import io.confluent.intellijplugin.ccloud.auth.CCloudAuthService
@@ -7,6 +8,7 @@ import io.confluent.intellijplugin.core.constants.BdtConnectionType
 import io.confluent.intellijplugin.core.constants.BdtPlugins
 import io.confluent.intellijplugin.core.monitoring.toolwindow.MonitoringToolWindowFactory
 import io.confluent.intellijplugin.core.settings.manager.RfsConnectionDataManager
+import io.confluent.intellijplugin.dev.HotReloadWatcher
 import io.confluent.intellijplugin.util.KafkaMessagesBundle
 
 class KafkaToolWindowFactory : MonitoringToolWindowFactory() {
@@ -30,5 +32,7 @@ class KafkaToolWindowFactory : MonitoringToolWindowFactory() {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         KafkaMonitoringToolWindowController.getInstance(project)?.setUp(toolWindow)
+        // the tool window is rebuilt after a live reload, so this restarts the dev hot-reload watcher too
+        service<HotReloadWatcher>().start()
     }
 }

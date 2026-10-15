@@ -98,7 +98,7 @@ class KafkaConsumerPanel(
             .toTypedArray()
     ).apply {
         renderer = CustomListCellRenderer<ConsumerStartType> { it.title }
-        item = ConsumerStartType.NOW
+        item = ConsumerStartType.THE_BEGINNING
         addActionListener {
             updateStartWith()
             storeToUserData()
