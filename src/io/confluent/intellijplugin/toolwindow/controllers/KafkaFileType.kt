@@ -9,7 +9,7 @@ class KafkaFileType : FileType {
     override fun getName() = ""
     override fun getDescription() = ""
     override fun getDefaultExtension() = ""
-    override fun getIcon() = BigdatatoolsKafkaIcons.ConfluentTab
+    override fun getIcon() = BigdatatoolsKafkaIcons.KafkaToolWindow
     override fun isBinary() = true
 }
 
