@@ -21,7 +21,13 @@ cp build/libs/$JAR "$TARGET"
 echo "Copied $JAR — waiting for IntelliJ to reload it (click into IntelliJ if nothing happens)…"
 
 for i in {1..60}; do
-  if tail -n +$((LOG_LINES + 1)) "$LOG" | grep -i -E 'reloaded successfully|failed to unload|Detected plugin .jar|DynamicPlugins' ; then
+  NEW_LOG=$(tail -n +$((LOG_LINES + 1)) "$LOG")
+  if grep -q -i 'failed to unload' <<< "$NEW_LOG"; then
+    echo "❌ IntelliJ could not unload the plugin — restart IntelliJ to pick up the change"
+    exit 3
+  fi
+  if grep -q "^- load plugin 'Confluent'" <<< "$NEW_LOG"; then
+    echo "✅ Reloaded live in IntelliJ after ${i}s"
     exit 0
   fi
   sleep 1
