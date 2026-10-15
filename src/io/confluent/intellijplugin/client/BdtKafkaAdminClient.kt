@@ -10,7 +10,9 @@ import java.time.Duration
 class BdtKafkaAdminClient(private val adminClient: AdminClient) : Admin by adminClient, Disposable {
     override fun dispose() = executeOnPooledThread {
         try {
-            adminClient.close(Duration.ofSeconds(10))
+            // Duration.ZERO: the admin thread (whose context classloader is the plugin's) must be gone
+            // before the IDE's 5s unload check; a graceful 10s close kept the plugin from unloading
+            adminClient.close(Duration.ZERO)
         } catch (t: Throwable) {
             logger.warn("Cannot close kafka client", t)
         }

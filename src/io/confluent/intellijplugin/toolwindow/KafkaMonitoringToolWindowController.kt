@@ -80,16 +80,21 @@ class KafkaMonitoringToolWindowController(project: Project) : MonitoringToolWind
         else -> error("Unsupported connection type: ${connectionData::class.simpleName}")
     }
 
+    // Kept from setUp(): looking these app services up in dispose() runs during plugin unload, where the
+    // lookup fails ("Cannot find service ... classloader is being unloaded") and pins the plugin classloader
+    private var connectionDataManager: RfsConnectionDataManager? = null
+    private var authService: CCloudAuthService? = null
+
     override fun dispose() {
         super.dispose()
-        RfsConnectionDataManager.instance?.removeListener(settingsListener)
-        CCloudAuthService.getInstance().removeAuthStateListener(tabPresenter.authListener)
+        connectionDataManager?.removeListener(settingsListener)
+        authService?.removeAuthStateListener(tabPresenter.authListener)
     }
 
     override fun setUp(toolWindow: ToolWindow) {
         super.setUp(toolWindow)
-        RfsConnectionDataManager.instance?.addListener(settingsListener)
-        CCloudAuthService.getInstance().addAuthStateListener(tabPresenter.authListener)
+        connectionDataManager = RfsConnectionDataManager.instance?.also { it.addListener(settingsListener) }
+        authService = CCloudAuthService.getInstance().also { it.addAuthStateListener(tabPresenter.authListener) }
         KafkaRegistryUtil.disableLoggers()
         addConfluentCloudTab()
     }

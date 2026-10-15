@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightVirtualFile
 import io.confluent.intellijplugin.common.editor.KafkaEditorProvider
 import io.confluent.intellijplugin.common.models.KafkaEditorType
 import io.confluent.intellijplugin.core.monitoring.toolwindow.MainTreeController.Companion.dataManager
@@ -21,7 +20,7 @@ import io.confluent.intellijplugin.data.KafkaDataManager
 import io.confluent.intellijplugin.rfs.ConfluentDriver.Companion.isTopic
 import io.confluent.intellijplugin.rfs.KafkaDriver
 import io.confluent.intellijplugin.rfs.KafkaDriver.Companion.isTopicFolder
-import io.confluent.intellijplugin.toolwindow.controllers.KafkaFileType
+import io.confluent.intellijplugin.toolwindow.controllers.KafkaEditorFile
 import javax.swing.JComponent
 
 class KafkaCreateProducerAction : DumbAwareAction(), CustomComponentAction {
@@ -86,7 +85,7 @@ class KafkaCreateProducerAction : DumbAwareAction(), CustomComponentAction {
                 is CCloudClusterDataManager -> dataManager.connectionData.name
                 else -> "Unknown"
             }
-            val file = LightVirtualFile("$connectionName Producer", KafkaFileType(), "").apply {
+            val file = KafkaEditorFile("$connectionName Producer").apply {
                 when (dataManager) {
                     is KafkaDataManager -> putUserData(KafkaEditorProvider.KAFKA_MANAGER_KEY, dataManager)
                     is CCloudClusterDataManager -> putUserData(KafkaEditorProvider.CCLOUD_MANAGER_KEY, dataManager)
