@@ -62,8 +62,12 @@ abstract class MonitoringToolWindowController(protected val project: Project) : 
         DriverManager.init(project)
     }
 
+    // Kept from setUp(): a lookup in dispose() runs during plugin unload, after app services are gone; the failed
+    // lookup left a plugin class in the app service container and kept the plugin classloader alive
+    private var connectionDataManager: RfsConnectionDataManager? = null
+
     override fun dispose() {
-        RfsConnectionDataManager.instance?.removeListener(settingsListener)
+        connectionDataManager?.removeListener(settingsListener)
         try {
             toolWindow.remove()
         } catch (_: Throwable) {
@@ -105,7 +109,7 @@ abstract class MonitoringToolWindowController(protected val project: Project) : 
         //  }
         //})
 
-        RfsConnectionDataManager.instance?.addListener(settingsListener)
+        connectionDataManager = RfsConnectionDataManager.instance?.also { it.addListener(settingsListener) }
 
         val connections = getConnectionSettings()
 

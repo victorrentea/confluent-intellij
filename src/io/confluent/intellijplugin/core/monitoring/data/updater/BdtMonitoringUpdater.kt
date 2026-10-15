@@ -40,6 +40,10 @@ class BdtMonitoringUpdater(val dataManager: MonitoringDataManager) : Disposable 
 
     override fun dispose() {
         isDisposed.set(true)
+        // stop in-flight refreshes too: on plugin unload they kept running on pooled threads and looked up
+        // app services (KafkaToolWindowSettings) after those were unloaded, pinning the plugin classloader
+        alarm.cancelAllRequests()
+        cancelCurrent()
     }
 
     fun cancelCurrent() {
@@ -63,6 +67,7 @@ class BdtMonitoringUpdater(val dataManager: MonitoringDataManager) : Disposable 
     }
 
     fun invokeRefreshModels(dataModels: List<DataModel<*>>) = executeOnPooledThread {
+        if (isDisposed.get()) return@executeOnPooledThread
         executeTask(UpdateTask { innerRefresh(dataModels, it, withConnectionCheck = false) })
     }
 
@@ -118,7 +123,7 @@ class BdtMonitoringUpdater(val dataManager: MonitoringDataManager) : Disposable 
         if (toUpdate.isEmpty() && !withConnectionCheck)
             return
 
-        if (!client.isInited())
+        if (isDisposed.get() || !client.isInited())
             return
 
         if (client.isConnecting())
@@ -167,6 +172,7 @@ class BdtMonitoringUpdater(val dataManager: MonitoringDataManager) : Disposable 
 
 
             toUpdate.withIndex().forEach { indexedValue ->
+                if (isDisposed.get()) return
                 notify {
                     it.setProgress(id, (indexedValue.index).toDouble() / (toUpdate.size))
                 }
@@ -226,6 +232,7 @@ class BdtMonitoringUpdater(val dataManager: MonitoringDataManager) : Disposable 
     }
 
     private fun executeTask(task: UpdateTask) {
+        if (isDisposed.get()) return
         executingTask.add(task)
         try {
             task.perform()

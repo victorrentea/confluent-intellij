@@ -98,13 +98,20 @@ abstract class DriverManager(val project: Project?) : Disposable {
         innerDrivers.clear()
     }
 
+    // initDrivers() runs on a pooled thread that nothing cancels; on plugin unload it must not go on creating
+    // drivers, whose constructors look up app services that are already gone
+    @Volatile
+    private var isDisposed = false
+
     override fun dispose() {
+        isDisposed = true
         connDataManager.removeListener(connectionListener)
     }
 
     protected abstract fun isSupportedStorageLocation(newConnectionData: ConnectionData, project: Project?): Boolean
 
     private fun createDriver(connectionData: RemoteFsDriverProvider) {
+        if (isDisposed) return
         try {
             val existsDriver = drivers.firstOrNull { it.getExternalId() == connectionData.innerId }
             if (existsDriver != null) {

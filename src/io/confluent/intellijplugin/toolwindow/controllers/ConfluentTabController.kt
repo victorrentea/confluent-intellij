@@ -26,6 +26,9 @@ class ConfluentTabController(
     private val project: Project,
     private val onDriverCreated: (() -> Unit)? = null  // Callback to refresh toolbar after driver created
 ) : ComponentController, Disposable, CCloudAuthService.AuthStateListener {
+    // kept from construction: looking it up in dispose() runs during plugin unload, after app services are gone
+    private val authService = CCloudAuthService.getInstance()
+
 
     private val cardLayout = CardLayout()
     private val cardPanel = JPanel(cardLayout)
@@ -48,7 +51,7 @@ class ConfluentTabController(
             ConnectionSettings.create(project, group, connectionData, true)
         }, SIGN_IN_CARD)
 
-        CCloudAuthService.getInstance().addAuthStateListener(this)
+        authService.addAuthStateListener(this)
 
         // Initialize with appropriate view
         if (CCloudAuthService.getInstance().isSignedIn()) {
@@ -117,6 +120,6 @@ class ConfluentTabController(
     internal fun getMainController(): ConfluentMainController? = resourceController
 
     override fun dispose() {
-        CCloudAuthService.getInstance().removeAuthStateListener(this)
+        authService.removeAuthStateListener(this)
     }
 }
