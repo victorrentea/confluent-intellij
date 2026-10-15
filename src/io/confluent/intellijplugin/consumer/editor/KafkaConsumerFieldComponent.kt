@@ -70,10 +70,11 @@ class KafkaConsumerFieldComponent(
             KafkaMessagesBundle.message("consumer.producer.value.group")
 
         panel.apply {
-            group(title) {
-                row(KafkaMessagesBundle.message("consumer.producer.format.type")) {
-                    cell(fieldTypeComboBox).align(Align.FILL).resizableColumn()
-                }
+            // the type sits on the "Key:"/"Value:" line itself, no separate "Type:" row: saves a row each
+            row("$title:") {
+                cell(fieldTypeComboBox).align(Align.FILL).resizableColumn()
+            }
+            indent {
                 rowsRange {
                     row(KafkaMessagesBundle.message("settings.format.registry.schema")) {
                         cell(schemaComboBox).align(Align.FILL).resizableColumn().gap(RightGap.SMALL)

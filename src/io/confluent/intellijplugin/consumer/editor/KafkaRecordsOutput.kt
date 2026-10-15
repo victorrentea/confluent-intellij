@@ -106,6 +106,13 @@ class KafkaRecordsOutput(val project: Project, val isProducer: Boolean) : Dispos
             // also single-valued per consumer session, so sorting it is meaningless. Keep only the
             // cheap numeric/Date sorts (Timestamp/Partition/Offset).
             MaterialTableUtils.setupSorters(this, sortStringColumns = false)
+
+            // View-only layout (model indices stay as they are): Partition and Offset/Duration are short
+            // numbers, so they go right after Timestamp and leave the free width to Value at the far right.
+            // Topic is dropped from view: a consumer/producer tab works on a single topic, so it repeats one value.
+            moveColumn(convertColumnIndexToView(4), 2)
+            moveColumn(convertColumnIndexToView(5), 3)
+            removeColumn(columnModel.getColumn(convertColumnIndexToView(0)))
         }
 
         val header = TableFilterHeader(table).apply {

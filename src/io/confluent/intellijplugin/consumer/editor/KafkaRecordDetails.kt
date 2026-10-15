@@ -129,8 +129,10 @@ internal class KafkaRecordDetails(project: Project, parentDisposable: Disposable
             }
         }
 
-        val keyGroup = collapsibleGroup(title = KafkaMessagesBundle.message("consumer.record.key"), indent = false) {
+        // "Key:" heading and its viewer type on one line, instead of a collapsible group + a row for the combo
+        val keyGroup = rowsRange {
             row {
+                label(KafkaMessagesBundle.message("consumer.record.key")).bold()
                 cell(keyViewerType).align(AlignX.RIGHT)
             }
             keyLoadFileLinkRow = row {
@@ -146,12 +148,11 @@ internal class KafkaRecordDetails(project: Project, parentDisposable: Disposable
                 cell(keyEditorPanel).resizableColumn().align(AlignX.FILL)
             }
         }
-        keyGroup.expanded = true
         keyGroup.visibleIf(error.isNull())
-        keyGroup.topGap(TopGap.NONE).bottomGap(BottomGap.NONE)
 
-        val valueGroup = collapsibleGroup(title = KafkaMessagesBundle.message("consumer.record.value"), indent = false) {
+        val valueGroup = rowsRange {
             row {
+                label(KafkaMessagesBundle.message("consumer.record.value")).bold()
                 cell(valueViewerType).align(AlignX.RIGHT)
             }
             valueLoadFileLinkRow = row {
@@ -163,9 +164,7 @@ internal class KafkaRecordDetails(project: Project, parentDisposable: Disposable
                 cell(valueEditorPanel).resizableColumn().align(AlignX.FILL)
             }
         }
-        valueGroup.expanded = true
         valueGroup.visibleIf(error.isNull())
-        valueGroup.topGap(TopGap.NONE).bottomGap(BottomGap.NONE)
 
         val headerGroup = collapsibleGroup(title = KafkaMessagesBundle.message("record.info.headers"), indent = false) {
             row {
@@ -177,15 +176,20 @@ internal class KafkaRecordDetails(project: Project, parentDisposable: Disposable
 
         val metainfoGroup =
             collapsibleGroup(title = KafkaMessagesBundle.message("record.info.metadata"), indent = true) {
-                row(KafkaMessagesBundle.message("consumer.record.topic")) { cell(topicField).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("consumer.record.partition")) { cell(partition).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("consumer.record.offset")) { cell(offset).align(AlignX.FILL) }
-                    .visibleIf(offset.enteredTextSatisfies { it.isNotEmpty() })
-                row(KafkaMessagesBundle.message("consumer.timestamp.label")) { cell(timestamp).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("consumer.record.keysize")) { cell(keySize).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("consumer.record.valuesize")) { cell(valueSize).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("label.key.type")) { cell(keyTypeLabel).align(AlignX.FILL) }
-                row(KafkaMessagesBundle.message("label.value.type")) { cell(valueTypeLabel).align(AlignX.FILL) }
+                // read-only label/value pairs: no gap between rows, they read as a compact list
+                customizeSpacingConfiguration(object : IntelliJSpacingConfiguration() {
+                    override val verticalComponentGap = 0
+                }) {
+                    row(KafkaMessagesBundle.message("consumer.record.topic")) { cell(topicField).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("consumer.record.partition")) { cell(partition).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("consumer.record.offset")) { cell(offset).align(AlignX.FILL) }
+                        .visibleIf(offset.enteredTextSatisfies { it.isNotEmpty() })
+                    row(KafkaMessagesBundle.message("consumer.timestamp.label")) { cell(timestamp).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("consumer.record.keysize")) { cell(keySize).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("consumer.record.valuesize")) { cell(valueSize).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("label.key.type")) { cell(keyTypeLabel).align(AlignX.FILL) }
+                    row(KafkaMessagesBundle.message("label.value.type")) { cell(valueTypeLabel).align(AlignX.FILL) }
+                }
             }
 
         metainfoGroup.expanded = false

@@ -32,7 +32,10 @@ object DataTableCreator {
                 TableExtensionType.SELECTION_PRESERVER -> TableSelectionPreserver.installOn(table)
                 TableExtensionType.LOADING_INDICATOR -> TableLoadingDecorator.installOn(table)
                 TableExtensionType.FIRST_ROW_AUTOSELECTOR -> TableRowAutoselector.installOn(table)
-                TableExtensionType.SMART_RESIZER -> TableResizeController.installOn(table)
+                // tool window tables hold short values: stretching the last column to the full width
+                // pushed right-aligned numbers (e.g. Offset) to the far edge of the screen
+                TableExtensionType.SMART_RESIZER -> TableResizeController.installOn(table).mode =
+                    TableResizeController.Mode.FIT_CONTENT
                 TableExtensionType.MULTI_SELECT -> table.selectionModel.selectionMode =
                     ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
             }

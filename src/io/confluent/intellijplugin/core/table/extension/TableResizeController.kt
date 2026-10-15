@@ -31,7 +31,9 @@ class TableResizeController private constructor(private val table: JTable) : Tab
 
     enum class Mode {
         STRETCH_LAST_COLUMN,
-        PRIOR_COLUMNS_LIST
+        PRIOR_COLUMNS_LIST,
+        /** Columns keep their content-fitted width; the table does not grow to fill the viewport. */
+        FIT_CONTENT
     }
 
     var mode = Mode.STRETCH_LAST_COLUMN
@@ -120,6 +122,7 @@ class TableResizeController private constructor(private val table: JTable) : Tab
         if (table.columnCount == 0 || columResizingInProgress || table.parent == null || table.parent.width == 0) {
             return
         }
+        if (mode == Mode.FIT_CONTENT) return
 
         if (mode == Mode.STRETCH_LAST_COLUMN) {
 

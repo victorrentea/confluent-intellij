@@ -42,6 +42,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import io.confluent.intellijplugin.registry.KafkaRegistryFormat
 import io.confluent.intellijplugin.util.KafkaConsumerGroupChangeOffsetProcess
 import io.confluent.intellijplugin.util.KafkaMessagesBundle
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -296,7 +297,10 @@ class KafkaConsumerPanel(
             row { cell(advancedSettings) }
         }
 
-        KafkaProducerConsumerPanel.createPanel(panel, consumeButton, progress)
+        KafkaProducerConsumerPanel.createPanel(panel, consumeButton, progress).apply {
+            // below this the splitter squeezed the combos to "BookAssignedToUs…" / "From the…"
+            minimumSize = Dimension(max(minimumSize.width, JBUI.scale(320)), minimumSize.height)
+        }
     }
 
     private val settingsPanel: JPanel by settingsPanelDelegate
