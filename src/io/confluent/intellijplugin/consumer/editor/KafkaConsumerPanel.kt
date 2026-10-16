@@ -46,6 +46,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import io.confluent.intellijplugin.registry.KafkaRegistryFormat
 import io.confluent.intellijplugin.util.KafkaConsumerGroupChangeOffsetProcess
 import io.confluent.intellijplugin.util.KafkaMessagesBundle
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.JButton
@@ -103,8 +104,13 @@ class KafkaConsumerPanel(
             .toTypedArray()
     ).apply {
         renderer = CustomListCellRenderer<ConsumerStartType> { it.title }
-        item = ConsumerStartType.THE_BEGINNING
+        // a new consumer starts where the last one was set to start, instead of resetting every time
+        item = PropertiesComponent.getInstance().getValue(LAST_START_FROM_KEY)
+            ?.let { saved -> ConsumerStartType.entries.firstOrNull { it.name == saved } }
+            ?.takeIf { it != ConsumerStartType.CONSUMER_GROUP || kafkaManager.supportsConsumerGroups() }
+            ?: ConsumerStartType.THE_BEGINNING
         addActionListener {
+            item?.let { PropertiesComponent.getInstance().setValue(LAST_START_FROM_KEY, it.name) }
             updateStartWith()
             storeToUserData()
             getComponent().revalidate()
@@ -669,6 +675,7 @@ class KafkaConsumerPanel(
 
         // A number of string keys for PropertiesComponent.getInstance().getBoolean(**_**_ID, false)
         private const val SETTINGS_SHOW_ID = "io.confluent.intellijplugin.consumer.settings.show"
+        private const val LAST_START_FROM_KEY = "io.confluent.intellijplugin.consumer.lastStartFrom"
         private const val PRESETS_SHOW_ID = "io.confluent.intellijplugin.consumer.presets.show"
 
         // System property to enable WebView-based message viewer (for development/testing)
