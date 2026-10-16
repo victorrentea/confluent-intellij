@@ -126,10 +126,12 @@ class KafkaRecordsOutput(val project: Project, val isProducer: Boolean) : Dispos
         }
 
         MaterialTableUtils.fitColumnsWidth(table)
+        narrowNumberColumns(table)
         resizeController.componentResized()
 
         TableFirstRowAdded(table) {
             MaterialTableUtils.fitColumnsWidth(table)
+            narrowNumberColumns(table)
             resizeController.componentResized()
         }
 
@@ -137,6 +139,19 @@ class KafkaRecordsOutput(val project: Project, val isProducer: Boolean) : Dispos
         TableCellPreview.installOn(table, listOf(KEY_COLUMN, VALUE_COLUMN))
 
         table to header
+    }
+
+    /** Partition/Offset hold small numbers: size them to two digits (headers get an ellipsis), the width goes to Value. */
+    private fun narrowNumberColumns(table: JTable) {
+        val digits = table.getFontMetrics(table.font).stringWidth("00")
+        val width = digits + JBUI.scale(12)
+        table.columnModel.columns.asIterator().forEach {
+            if (it.headerValue == PARTITION_COLUMN || it.headerValue == OFFSET_COLUMN) {
+                it.minWidth = width
+                it.preferredWidth = width
+                it.width = width
+            }
+        }
     }
 
     private val outputTable: MaterialTable get() = outputTableDelegate.value.first
